@@ -1,0 +1,17 @@
+fastapi>=0.100.0
+uvicorn>=0.20.0
+pydantic>=2.0.0
+smartapi-python
+pyotp
+requests
+logzero
+websocket-client
+pycryptodome
+pymongo>=4.0.0
+dnspython>=2.6.0
+bcrypt>=4.0.0
+pyjwt>=2.8.0
+cryptography>=41.0.0
+pandas>=2.0.0
+python-multipart>=0.0.9
+

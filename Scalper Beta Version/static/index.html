@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASTRO QUANT // SCALPER PRO — Institutional Trading Terminal</title>
+  <meta name="description"
+    content="Next-Gen Institutional Step-Down Slicing Scalper Terminal with Astro Signal Engine, Dynamic Range Grid, Live Orderbook Ladder, and Multi-Slot Execution.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css?v=20260914_prevday_history3">
+</head>
+
+<body class="dark-terminal-theme">
+
+  <!-- ========================================================================
+       PERSISTENT TOP TRADING MODE BANNER (UNMISSABLE PAPER / LIVE INDICATOR)
+       ======================================================================== -->
+  <div id="topModeBanner" class="top-mode-banner mode-banner-paper">
+    <div class="mode-banner-content">
+      <div class="mode-banner-left">
+        <span class="mode-beacon-pulse" id="modeBannerBeacon">🟢</span>
+        <span class="mode-banner-title" id="modeBannerTitle">PAPER TRADING MODE — Zero-Risk Simulation</span>
+        <span class="mode-banner-sub" id="modeBannerSub">(Market Data Active · Orders Simulated with SmartAPI LTP · No Real Capital at Risk)</span>
+      </div>
+      <div class="mode-banner-right">
+        <button id="btnToggleTradingMode" class="btn-mode-toggle" onclick="handleModeSwitchClick()">
+          Switch to LIVE (Real Money)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       TOP EXECUTIVE HUD HEADER
+       ======================================================================== -->
+  <header class="hud-top-bar">
+    <div class="hud-left">
+      <!-- Terminal Brand -->
+      <div class="terminal-brand">
+        <div class="brand-orbital-beacon">
+          <div class="beacon-core"></div>
+          <div class="beacon-ring"></div>
+        </div>
+        <div class="brand-text-block">
+          <div class="brand-main">
+            <span class="brand-astro">ASTRO</span>
+            <span class="brand-quant">QUANT</span>
+            <span class="brand-chip">PRO v4.0</span>
+          </div>
+          <span class="brand-sub">SLICER <span class="accent-glow" id="headerAccentTitle">NIFTY</span> · STEP-DOWN
+            MULTI-SLOT SCALPER</span>
+        </div>
+      </div>
+
+      <!-- Instrument Segmented Selector -->
+      <div class="instrument-segmented-wrapper">
+        <select id="instrumentSelect" class="hud-instrument-select" onchange="onInstrumentChange(this.value)">
+          <option value="NIFTY" selected>⚡ NIFTY 50 (50 pt Step)</option>
+          <option value="SENSEX">🚀 SENSEX (100 pt Step)</option>
+        </select>
+      </div>
+
+      <!-- Active Contract Beacon -->
+      <div class="active-contract-chip" id="symbolBadge">
+        <span class="contract-live-radar"></span>
+        <span class="contract-symbol-text" id="symbolText">NIFTY 24500 CE</span>
+      </div>
+    </div>
+
+    <!-- HUD Right Status & Profile -->
+    <div class="hud-right">
+      <button id="signInHeaderBtn" class="btn-hud-auth" onclick="showLoginModal()" style="display: inline-flex;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        <span>Sign In</span>
+      </button>
+
+      <!-- Trading Mode Pill in HUD -->
+      <div class="hud-mode-pill paper" id="hudModePill" onclick="handleModeSwitchClick()" title="Click to toggle Trading Mode (Paper / Live)">
+        <span class="mode-dot"></span>
+        <span id="hudModePillText">PAPER MODE</span>
+      </div>
+
+      <div class="hud-user-chip" id="userSessionBadge" style="display: none;">
+        <span class="user-avatar-dot"></span>
+        <span id="userBadgeClientId" class="user-client-id">admin</span>
+        <button id="logoutBtn" class="hud-logout-btn" onclick="handleLogout()" title="Logout session">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="hud-stream-pill" id="connectionStatus">
+        <span class="stream-ping-dot pulse-indicator"></span>
+        <span class="stream-label status-text">Connected</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       SLOT WORKBENCH SELECTOR DECK
+       ======================================================================== -->
+  <nav class="slot-workbench-deck">
+    <div class="deck-label">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+        <line x1="8" y1="21" x2="16" y2="21"></line>
+        <line x1="12" y1="17" x2="12" y2="21"></line>
+      </svg>
+      <span>SLOTS:</span>
+    </div>
+    <div id="slotTabBar" class="slot-tab-strip">
+      <!-- Rendered dynamically by app.js -->
+    </div>
+  </nav>
+
+  <!-- ========================================================================
+       EXECUTIVE TELEMETRY HUD (6 GLOWING METRIC PODS)
+       ======================================================================== -->
+  <section class="telemetry-hud-banner">
+    <!-- Pod 1: Live Option LTP -->
+    <div class="telemetry-pod pod-primary-ltp">
+      <div class="pod-header">
+        <span class="pod-tag">MARKET PREVIEW</span>
+        <span class="pod-beacon-dot"></span>
+      </div>
+      <div class="pod-body">
+        <span class="pod-big-value ltp-highlight" id="metricLiveLtp">--</span>
+        <div class="pod-sub-row">
+          <span class="pod-sub-label" id="metricLiveLtpSub">Option Premium LTP</span>
+          <span class="pod-trend-tag">LIVE TICK</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pod 2: Gross P&L (Separated Paper vs Live) -->
+    <div class="telemetry-pod pod-gross">
+      <div class="pod-header">
+        <span class="pod-tag">OVERALL REALIZED</span>
+        <span class="pod-icon-pill">SEPARATED</span>
+      </div>
+      <div class="pod-body pod-split-body">
+        <div class="pod-split-col">
+          <span class="split-mode-label paper-label">🟢 PAPER</span>
+          <span class="pod-split-value" id="metricGrossPaperPnl">₹0.00</span>
+          <span class="pod-sub-label" id="metricGrossPaperCount">0 Closed</span>
+        </div>
+        <div class="pod-split-divider"></div>
+        <div class="pod-split-col">
+          <span class="split-mode-label live-label">🔴 LIVE</span>
+          <span class="pod-split-value" id="metricGrossLivePnl">₹0.00</span>
+          <span class="pod-sub-label" id="metricGrossLiveCount">0 Closed</span>
+        </div>
+        <!-- Hidden fallback for legacy scripts -->
+        <span id="metricGrossPnl" style="display:none;">₹0.00</span>
+        <span id="metricGrossClosedCount" style="display:none;">0 Closed</span>
+      </div>
+    </div>
+
+    <!-- Pod 3: Today's Realized P&L (Separated Paper vs Live) -->
+    <div class="telemetry-pod pod-realized">
+      <div class="pod-header">
+        <span class="pod-tag">TODAY REALIZED</span>
+        <span class="pod-icon-pill">SEPARATED</span>
+      </div>
+      <div class="pod-body pod-split-body">
+        <div class="pod-split-col">
+          <span class="split-mode-label paper-label">🟢 PAPER</span>
+          <span class="pod-split-value" id="metricRealizedPaperPnl">₹0.00</span>
+          <span class="pod-sub-label" id="metricPaperClosedCount">0 Today</span>
+        </div>
+        <div class="pod-split-divider"></div>
+        <div class="pod-split-col">
+          <span class="split-mode-label live-label">🔴 LIVE</span>
+          <span class="pod-split-value" id="metricRealizedLivePnl">₹0.00</span>
+          <span class="pod-sub-label" id="metricLiveClosedCount">0 Today</span>
+        </div>
+        <!-- Hidden fallback for legacy scripts -->
+        <span id="metricRealizedPnl" style="display:none;">₹0.00</span>
+        <span id="metricClosedCount" style="display:none;">0 Closed Today</span>
+      </div>
+    </div>
+
+    <!-- Pod 4: Unrealized Floating P&L -->
+    <div class="telemetry-pod pod-unrealized">
+      <div class="pod-header">
+        <span class="pod-tag">OPEN POSITIONS P&amp;L</span>
+        <span class="pod-icon-pill">FLOATING</span>
+      </div>
+      <div class="pod-body">
+        <span class="pod-big-value" id="metricUnrealizedPnl">₹0.00</span>
+        <span class="pod-sub-label" id="metricOpenCount">0 Open Slices</span>
+      </div>
+    </div>
+
+    <!-- Pod 5: Grid Geometry -->
+    <div class="telemetry-pod pod-geometry">
+      <div class="pod-header">
+        <span class="pod-tag">LADDER GEOMETRY</span>
+        <span class="pod-icon-pill">SPAN / STEP</span>
+      </div>
+      <div class="pod-body">
+        <span class="pod-big-value" id="metricSpanStep">40.0 pts / 8.0 pts</span>
+        <span class="pod-sub-label" id="metricTotalLevels">5 Total Levels</span>
+      </div>
+    </div>
+
+    <!-- Pod 6: Stop-Loss Radar -->
+    <div class="telemetry-pod pod-stoploss">
+      <div class="pod-header">
+        <span class="pod-tag">RANGE STOP-LOSS</span>
+        <span class="pod-icon-pill danger-pill">SHIELD</span>
+      </div>
+      <div class="pod-body">
+        <span class="pod-big-value loss-text" id="metricLossTrigger">None (No Open Slices)</span>
+        <span class="pod-sub-label" id="metricLossDetail">Lowest – 20 pts</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       MAIN 3-COLUMN QUANT COCKPIT WORKSTATION
+       ======================================================================== -->
+  <main class="cockpit-workstation-grid">
+
+    <!-- ======================================================================
+         COLUMN 1: MARKET EXECUTION & DYNAMIC GRID CONTROLS (ZONE B)
+         ====================================================================== -->
+    <div class="cockpit-column col-execution">
+
+      <!-- Card 1: Spot & Strike Radar -->
+      <div class="neon-card card-spot-radar">
+        <div class="card-headline">
+          <div class="headline-left">
+            <span class="headline-icon-box cyan-glow">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="22" y1="12" x2="18" y2="12"></line>
+                <line x1="6" y1="12" x2="2" y2="12"></line>
+                <line x1="12" y1="6" x2="12" y2="2"></line>
+                <line x1="12" y1="22" x2="12" y2="18"></line>
+              </svg>
+            </span>
+            <div>
+              <h2 id="spotCardHeaderTitle">Spot &amp; Strike Radar</h2>
+              <span class="headline-sub">Live Contract Resolution</span>
+            </div>
+          </div>
+          <span class="hud-badge-tag" id="strikeBadge">ATM: 24500</span>
+        </div>
+
+        <div class="card-interior-content">
+          <!-- Spot Index Input Row -->
+          <div class="form-cyber-group">
+            <div class="label-row">
+              <label for="spotInput" id="spotInputLabel">Spot Index Price</label>
+              <span class="micro-hint">Live feed sync</span>
+            </div>
+            <div class="cyber-input-combo">
+              <input type="number" id="spotInput" step="0.5" value="24520"
+                onkeydown="if(event.key==='Enter') updateSpotPreview()">
+              <button class="btn-cyber-action" id="btnAutoSpot" onclick="fetchAndApplyAutoSpot()"
+                title="Fetch live Spot price from Angel One">
+                ⚡ Auto Sync
+              </button>
+            </div>
+          </div>
+
+          <!-- Option Side Selector (CE / PE) -->
+          <div class="form-cyber-group">
+            <label for="optionTypeSelect">Execution Option Side</label>
+            <div class="option-rocker-wrapper">
+              <select id="optionTypeSelect" class="cyber-select-input" onchange="selectRaiseSide(this.value)">
+                <option value="CE" selected>🟢 CALL (CE) — Bullish Slicing</option>
+                <option value="PE">🔴 PUT (PE) — Bearish Slicing</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Strike Resolution Matrix -->
+          <div class="strike-resolution-matrix">
+            <div class="matrix-row">
+              <span class="matrix-label" id="resStrikeLabel">Nearest ATM Strike:</span>
+              <span class="matrix-value-strike" id="resStrikeVal">24500</span>
+            </div>
+
+            <!-- Manual Strike Selection Dropdown -->
+            <div class="manual-override-block">
+              <div class="override-header">
+                <span class="override-title">Strike Selection (Manual Override)</span>
+                <span id="strikeSourceBadge" class="strike-source-tag auto">AUTO</span>
+              </div>
+              <select id="strikeSelect" class="cyber-select-input strike-dropdown"
+                onchange="onManualStrikeChange(this.value)">
+                <!-- Dynamically populated ±15 strikes -->
+              </select>
+            </div>
+
+            <div class="matrix-row-premium">
+              <span class="matrix-label">Live Premium LTP:</span>
+              <span class="matrix-premium-val ltp-highlight" id="resOptLtpVal">--</span>
+            </div>
+            <div class="matrix-contract-desc" id="resContractVal">Active Contract: NIFTY 24500 CE</div>
+          </div>
+
+          <!-- Option LTP Input & Sync -->
+          <div class="form-cyber-group" style="margin-top: 4px;">
+            <div class="label-row">
+              <label for="optLtpInput">Option Premium LTP</label>
+            </div>
+            <div class="cyber-input-combo">
+              <input type="number" id="optLtpInput" step="0.05" placeholder="e.g. 180.00"
+                onkeydown="if(event.key==='Enter') sendManualOptTick()">
+              <button class="btn-cyber-action" id="btnAutoOptLtp" onclick="fetchAndApplyAutoOptLtp()"
+                title="Fetch live Option LTP from Angel One">
+                ⚡ Auto Fetch
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Dynamic Range & Slicer Strategy Parameters -->
+      <div class="neon-card card-strategy-grid settings-card">
+        <div class="card-headline">
+          <div class="headline-left">
+            <span class="headline-icon-box amber-glow">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+              </svg>
+            </span>
+            <div>
+              <h2>Dynamic Range Engine</h2>
+              <span class="headline-sub">Grid Slicing Parameters</span>
+            </div>
+          </div>
+          <span class="hud-badge-tag amber-badge" id="spanBadge">Span: 40.00 pts</span>
+        </div>
+
+        <form id="configForm" onsubmit="event.preventDefault();" class="card-interior-content">
+          <div class="cyber-fields-grid">
+            <!-- Dynamic Range (Points Magnitude) -->
+            <div class="form-cyber-group">
+              <label for="rangePoints">Range (Magnitude)</label>
+              <div class="cyber-input-wrap">
+                <input type="number" id="rangePoints" step="1" min="1" required value="40" oninput="updateSpanBadge()">
+                <span class="unit-tag">pts</span>
+              </div>
+            </div>
+
+            <!-- Slicer (Position Count) -->
+            <div class="form-cyber-group">
+              <label for="slicerCount">Slicer (Positions)</label>
+              <div class="cyber-input-wrap">
+                <input type="number" id="slicerCount" step="1" min="1" max="20" required value="5"
+                  oninput="updateSpanBadge()">
+                <span class="unit-tag">cnt</span>
+              </div>
+            </div>
+
+            <!-- Derived Step Readout Display -->
+            <div class="computed-step-hologram full-span dynamic-step-box">
+              <div class="hologram-label-row step-calc-row">
+                <span class="hologram-title step-calc-label">⚡ COMPUTED SLICE STEP:</span>
+                <span class="hologram-value step-calc-value" id="computedStepVal">8.00 pts</span>
+              </div>
+              <span class="hologram-formula step-calc-sub" id="computedStepFormula">(40.00 pts / 5 levels)</span>
+            </div>
+
+            <!-- Hidden compatibility fields -->
+            <input type="hidden" id="rangeHigh" value="140">
+            <input type="hidden" id="rangeLow" value="100">
+            <input type="hidden" id="sliceSize" value="8">
+
+            <!-- Profit Target -->
+            <div class="form-cyber-group">
+              <label for="profitPoint">Profit Point</label>
+              <div class="cyber-input-wrap">
+                <input type="number" id="profitPoint" step="0.5" min="0.1" required value="8">
+                <span class="unit-tag">pts</span>
+              </div>
+            </div>
+
+            <!-- Loss Point -->
+            <div class="form-cyber-group">
+              <label for="lossPoint">Loss Point</label>
+              <div class="cyber-input-wrap danger-border danger-input">
+                <input type="number" id="lossPoint" step="0.5" min="0.1" required value="8">
+                <span class="unit-tag">pts</span>
+              </div>
+            </div>
+
+            <!-- Qty per slice -->
+            <div class="form-cyber-group full-span">
+              <label for="qtyPerSlice">Quantity per Slice</label>
+              <div class="cyber-input-wrap">
+                <input type="number" id="qtyPerSlice" min="1" step="1" required value="1">
+                <span class="unit-tag">lots</span>
+              </div>
+            </div>
+
+            <!-- EOD Squareoff Cutoff Time -->
+            <div class="form-cyber-group full-span eod-group eod-cutoff-group">
+              <div class="eod-header-row">
+                <label for="eodCutoffSelect">EOD Squareoff Cutoff (IST)</label>
+                <span class="badge-eod-mini badge-eod" id="eodCutoffBadge">Cutoff: 3:22 PM</span>
+              </div>
+              <div class="eod-controls-flex eod-cutoff-controls">
+                <select id="eodCutoffSelect" class="cyber-select-input select-input"
+                  onchange="onEodCutoffSelectChange(this.value)">
+                  <option value="15:15">15:15 (3:15 PM)</option>
+                  <option value="15:20">15:20 (3:20 PM)</option>
+                  <option value="15:22" selected>15:22 (3:22 PM - Default)</option>
+                  <option value="15:25">15:25 (3:25 PM)</option>
+                  <option value="15:28">15:28 (3:28 PM)</option>
+                  <option value="15:30">15:30 (3:30 PM)</option>
+                  <option value="15:32">15:32 (3:32 PM)</option>
+                  <option value="15:35">15:35 (3:35 PM)</option>
+                  <option value="custom">Custom...</option>
+                </select>
+                <input type="time" id="eodCutoffInput" min="15:00" max="15:45" value="15:22" class="cyber-time-input"
+                  onchange="onEodCutoffInputChange(this.value)" oninput="onEodCutoffInputChange(this.value)">
+              </div>
+            </div>
+          </div>
+
+          <!-- Execution Action Buttons -->
+          <div class="execution-button-cluster run-slicer-group">
+            <button type="button" class="btn-cyber-launch btn-run-slicer" id="btnRunSlicer" onclick="runSlicer()">
+              <span class="launch-icon">🚀</span>
+              <span class="launch-text">RUN SLICER</span>
+            </button>
+            <button type="button" class="btn-cyber-eod btn-eod-squareoff" id="btnEodSquareoff"
+              onclick="triggerEodSquareoff()" style="display:none;">
+              ⏹ EOD SQUAREOFF
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         COLUMN 2: ORDERBOOK LADDER DECK & ACTIVE SLICES (ZONE A)
+         ====================================================================== -->
+    <div class="cockpit-column col-ladder-deck">
+
+      <!-- Ladder Visualizer Deck -->
+      <div class="neon-card card-ladder ladder-card">
+        <div class="card-headline">
+          <div class="headline-left">
+            <span class="headline-icon-box blue-glow">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+              </svg>
+            </span>
+            <div>
+              <h2>Live Ladder Visualizer</h2>
+              <span class="headline-sub status-note" id="ladderNote">Slicer Stopped</span>
+            </div>
+          </div>
+          <span class="hud-badge-tag blue-badge">DEPTH DECK</span>
+        </div>
+
+        <!-- Dynamic Ladder Rungs Container -->
+        <div class="ladder-container-deck ladder-container" id="ladderContainer">
+          <div class="ladder-empty-placeholder">
+            <div class="empty-radar-scan"></div>
+            <p>Ladder inactive. Configure parameters and click <strong>🚀 Run Slicer</strong> to initialize live levels.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Open Slices Table Matrix -->
+      <div class="neon-card card-positions positions-card">
+        <div class="card-headline">
+          <div class="headline-left">
+            <span class="headline-icon-box emerald-glow">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+              </svg>
+            </span>
+            <div>
+              <h2>Open Slice Positions</h2>
+              <span class="headline-sub">Real-Time Risk &amp; Target Matrix</span>
+            </div>
+          </div>
+          <span class="hud-badge-tag emerald-badge count-badge" id="openSlicesBadge">0 Open</span>
+        </div>
+
+        <div class="cyber-table-viewport table-wrapper">
+          <table class="cyber-data-table data-table">
+            <thead>
+              <tr>
+                <th>LABEL</th>
+                <th>LEVEL</th>
+                <th>BUY PRICE</th>
+                <th>TARGET</th>
+                <th>QTY</th>
+                <th>LIVE P&amp;L</th>
+                <th>DIST</th>
+                <th>STATUS</th>
+                <th style="text-align:center;">EXIT</th>
+              </tr>
+            </thead>
+            <tbody id="openSlicesTableBody">
+              <tr class="empty-table-row empty-row">
+                <td colspan="9">No active slice positions. Run Slicer to trigger levels.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         COLUMN 3: ASTRO SIGNAL INTELLIGENCE STATION (ZONE C)
+         ====================================================================== -->
+    <div class="cockpit-column col-astro-intelligence">
+      <div class="neon-card card-astro-deck astro-card">
+        <div class="card-headline">
+          <div class="headline-left">
+            <span class="headline-icon-box violet-glow">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z">
+                </path>
+              </svg>
+            </span>
+            <div>
+              <h2>Astro Signal Engine</h2>
+              <span class="headline-sub">Weekly CSV Intelligence Radar</span>
+            </div>
+          </div>
+          <span class="hud-badge-tag violet-badge badge badge-astro" id="astroStatusBadge">Astro: Standby</span>
+        </div>
+
+        <div class="card-interior-content astro-panel-content">
+          <!-- Weekly CSV Dropzone -->
+          <div class="astro-dropzone-wrapper astro-upload-container">
+            <label class="astro-quantum-dropzone astro-file-dropzone" for="astroCsvFileInput">
+              <div class="dropzone-icon-ring">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </div>
+              <div class="dropzone-caption-group dropzone-text">
+                <span class="dropzone-title-text dropzone-title">Upload Weekly Astro CSV</span>
+                <span class="dropzone-sub-text dropzone-sub">Smart Header Detection · MongoDB Scalper.Astro</span>
+              </div>
+              <input type="file" id="astroCsvFileInput" accept=".csv" style="display:none;"
+                onchange="handleAstroCsvSelected(this)">
+            </label>
+            <div id="astroUploadFeedback" class="astro-upload-feedback" style="display:none;"></div>
+          </div>
+
+          <!-- Active Astro Report Card -->
+          <div class="astro-file-active-strip astro-active-file-card" id="astroActiveFileCard" style="display:none;">
+            <div class="file-strip-left file-card-left">
+              <span class="file-doc-icon file-icon">📑</span>
+              <div class="file-info-group file-details">
+                <span class="file-title-text file-name" id="astroActiveFileName">astro_report.csv</span>
+                <span class="file-meta-text file-meta" id="astroActiveFileMeta">0 rows · Active in Scalper.Astro</span>
+              </div>
+            </div>
+            <button class="btn-delete-report btn-delete-file" id="btnDeleteAstroFile" onclick="deleteActiveAstroFile()"
+              title="Delete active report">
+              🗑
+            </button>
+          </div>
+
+          <!-- 3-Row Cluster Window Radar -->
+          <div class="astro-radar-deck astro-cluster-box">
+            <div class="radar-header cluster-box-header">
+              <span class="radar-title cluster-title">3-Row Cluster Window</span>
+              <span class="radar-time-pill cluster-time-badge" id="astroClusterTime">Evaluating...</span>
+            </div>
+
+            <div class="cluster-trio-grid cluster-rows-grid">
+              <!-- Row T0 (Current) -->
+              <div class="cluster-node cluster-chip" id="clusterChip0">
+                <span class="node-slot chip-pos">T0 [Current]</span>
+                <span class="node-time chip-time" id="clusterTime0">--:--</span>
+                <span class="node-tag chip-dir dir-neutral" id="clusterDir0">WAITING</span>
+              </div>
+              <!-- Row T+1 (Next) -->
+              <div class="cluster-node cluster-chip" id="clusterChip1">
+                <span class="node-slot chip-pos">T+1 [Next]</span>
+                <span class="node-time chip-time" id="clusterTime1">--:--</span>
+                <span class="node-tag chip-dir dir-neutral" id="clusterDir1">WAITING</span>
+              </div>
+              <!-- Row T+2 (Next+1) -->
+              <div class="cluster-node cluster-chip" id="clusterChip2">
+                <span class="node-slot chip-pos">T+2 [Next+1]</span>
+                <span class="node-time chip-time" id="clusterTime2">--:--</span>
+                <span class="node-tag chip-dir dir-neutral" id="clusterDir2">WAITING</span>
+              </div>
+            </div>
+
+            <!-- Cluster Consensus Banner -->
+            <div class="consensus-banner cluster-consensus-banner consensus-neutral" id="astroConsensusBanner">
+              <span class="consensus-symbol consensus-icon" id="astroConsensusIcon">⚪</span>
+              <span class="consensus-text consensus-label" id="astroConsensusLabel">Upload weekly Astro CSV to activate
+                signal window</span>
+            </div>
+          </div>
+
+          <!-- Entry Guards Sentinel Checklist -->
+          <div class="entry-sentinel-checklist astro-filters-checklist">
+            <div class="sentinel-row filter-item">
+              <span class="sentinel-name filter-name">⏰ Market Hours (09:16 - Cutoff):</span>
+              <span class="sentinel-badge filter-pill pill-pass" id="filterHoursPill">PASS</span>
+            </div>
+            <div class="sentinel-row filter-item">
+              <span class="sentinel-name filter-name">🛡️ Active Trade Shield:</span>
+              <span class="sentinel-badge filter-pill pill-pass" id="filterTradePill">CLEAN</span>
+            </div>
+          </div>
+
+          <!-- Multi-Slot Astro Auto-Execution Switch -->
+          <div class="astro-auto-switch-deck astro-auto-toggle-box">
+            <div class="switch-meta toggle-meta">
+              <span class="switch-title toggle-title">Astro Auto-Trigger</span>
+              <span class="switch-sub toggle-sub" id="astroSlotTag">Arm auto-execution across slots (Call & Put)</span>
+            </div>
+            <label class="cyber-switch toggle-switch">
+              <input type="checkbox" id="astroAutoToggle" onchange="toggleAstroAutoExecution(this.checked)">
+              <span class="cyber-slider slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================================================
+       BOTTOM CLOSED TRADES LEDGER (AUDIT HISTORY)
+       ======================================================================== -->
+  <section class="closed-trades-ledger-deck history-card">
+    <div class="neon-card card-ledger">
+      <div class="card-headline card-header">
+        <div class="headline-left card-title-group">
+          <span class="headline-icon-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 14 14"></polyline>
+            </svg>
+          </span>
+          <div>
+            <h2>Closed Trades Execution Ledger</h2>
+            <span class="headline-sub">Audit History &amp; Realized P&amp;L Records</span>
+          </div>
+        </div>
+        <div class="headline-right-actions" style="display:flex; align-items:center; gap:10px;">
+          <!-- Mode Filter Tabs -->
+          <div class="ledger-mode-filter-group">
+            <button class="btn-filter-mode active" id="btnFilterAll" onclick="setLedgerModeFilter('all')">All Modes</button>
+            <button class="btn-filter-mode" id="btnFilterPaper" onclick="setLedgerModeFilter('paper')">🟢 Paper</button>
+            <button class="btn-filter-mode" id="btnFilterLive" onclick="setLedgerModeFilter('live')">🔴 Live</button>
+          </div>
+          <button class="btn-filter-mode" id="btnShowBrokerOrders" onclick="openBrokerOrdersModal()"
+            title="View live order history directly from Angel One" style="border-color:var(--accent-cyan,#06b6d4);color:var(--accent-cyan,#06b6d4);">
+            📑 Angel One Orders
+          </button>
+          <button class="btn-clear-ledger btn-clear-history" id="btnClearHistory" onclick="clearTradeHistory()"
+            title="Clear trade history and reset realized P&amp;L">
+            🗑 Clear All Trades
+          </button>
+          <span class="hud-badge-tag count-badge" id="closedSlicesBadge">0 Closed</span>
+        </div>
+      </div>
+
+      <div class="cyber-table-viewport max-h-ledger table-wrapper max-h-history">
+        <table class="cyber-data-table data-table">
+          <thead>
+            <tr>
+              <th>MODE</th>
+              <th>SLOT</th>
+              <th>SLICE</th>
+              <th>CONTRACT</th>
+              <th>ORDER ID</th>
+              <th>LEVEL</th>
+              <th>BUY PRICE</th>
+              <th>EXIT PRICE</th>
+              <th>QTY</th>
+              <th>REALIZED P&amp;L</th>
+              <th>EXIT REASON</th>
+              <th>ENTRY TIME (IST)</th>
+              <th>EXIT TIME (IST)</th>
+            </tr>
+          </thead>
+          <tbody id="closedSlicesTableBody">
+            <tr class="empty-table-row empty-row">
+              <td colspan="13">No closed slice executions yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       AUTHENTICATION / LOGIN MODAL
+       ======================================================================== -->
+  <div id="loginModal" class="login-modal-overlay" style="display: none;">
+    <div class="login-quantum-card login-modal-card">
+      <div class="login-modal-header">
+        <div class="login-logo-ring login-logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+        <div>
+          <h2 class="login-title login-modal-title">ASTRO QUANT <span class="cyan-text accent-text">TERMINAL</span></h2>
+          <p class="login-sub login-modal-desc">Enter Client ID &amp; Password to initialize trading session</p>
+        </div>
+      </div>
+
+      <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+        <div class="login-input-group login-field-group">
+          <label for="loginClientId">Client ID</label>
+          <input type="text" id="loginClientId" placeholder="e.g. admin" required autocomplete="username">
+        </div>
+
+        <div class="login-input-group login-field-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+
+        <div id="loginErrorMsg" class="login-error-pill login-error-badge" style="display: none;"></div>
+
+        <button type="submit" id="loginSubmitBtn" class="btn-login-launch btn-login-submit">
+          <span>🚀 Sign In &amp; Access Terminal</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       LIVE TRADING SAFETY CONFIRMATION MODAL
+       ======================================================================== -->
+  <div id="liveConfirmModal" class="login-modal-overlay" style="display: none;">
+    <div class="login-quantum-card live-confirm-card">
+      <div class="login-modal-header live-modal-header">
+        <div class="live-warning-icon">
+          ⚠️
+        </div>
+        <div>
+          <h2 class="login-title" style="color: #ef4444;">ACTIVATE LIVE TRADING</h2>
+          <p class="login-sub">REAL CAPITAL WILL BE AT RISK ON ANGEL ONE SMARTAPI</p>
+        </div>
+      </div>
+
+      <div class="live-warning-body">
+        <div class="live-warning-alert-box">
+          <p><strong>CAUTION:</strong> You are about to switch this client account to <strong>LIVE TRADING</strong> mode.</p>
+          <ul>
+            <li>Real money buy and sell orders will be submitted to Angel One SmartAPI.</li>
+            <li>Orders will fail closed if your Angel One session expires.</li>
+            <li>Zero automatic fallback to paper simulation will occur.</li>
+          </ul>
+        </div>
+
+        <div class="login-input-group" style="margin-top: 15px;">
+          <label for="liveConfirmInput">Type <strong style="color:#ef4444;">LIVE</strong> to confirm switch:</label>
+          <input type="text" id="liveConfirmInput" placeholder="Type LIVE in capital letters" autocomplete="off" oninput="onLiveConfirmInputChange(this.value)">
+        </div>
+
+        <div id="liveModalError" class="login-error-pill" style="display: none;"></div>
+
+        <div class="live-modal-actions" style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn-cancel-modal" onclick="closeLiveConfirmModal()">Cancel (Stay in Paper)</button>
+          <button type="button" id="btnSubmitLiveConfirm" class="btn-confirm-live" disabled onclick="executeSwitchToLive()">
+            🚨 Confirm Switch to LIVE
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       ANGEL ONE LIVE ORDER HISTORY MODAL
+       ======================================================================== -->
+  <div id="brokerOrdersModal" class="login-modal-overlay" style="display: none;">
+    <div class="login-quantum-card" style="max-width: 960px; width: 95%;">
+      <div class="card-headline card-header" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+        <div class="headline-left card-title-group">
+          <span class="headline-icon-box" style="background: rgba(6,182,212,0.15); color: var(--accent-cyan,#06b6d4);">
+            📑
+          </span>
+          <div>
+            <h2 style="margin: 0; font-size: 1.15rem; color: #fff;">Angel One Live Order History</h2>
+            <span class="headline-sub" style="font-size: 0.75rem; color: #94a3b8;">Real-time SmartAPI order book confirmed on Angel One</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="btn-filter-mode" onclick="refreshBrokerOrders()" title="Refresh order book from Angel One">🔄 Refresh</button>
+          <button class="btn-filter-mode" onclick="closeBrokerOrdersModal()" style="color: #ef4444; border-color: rgba(239,68,68,0.4);">✕ Close</button>
+        </div>
+      </div>
+
+      <div class="cyber-table-viewport max-h-ledger table-wrapper" style="max-height: 420px; overflow-y: auto;">
+        <table class="cyber-data-table data-table">
+          <thead>
+            <tr>
+              <th>ORDER ID</th>
+              <th>TRADING SYMBOL</th>
+              <th>EXCHANGE</th>
+              <th>TYPE</th>
+              <th>QTY</th>
+              <th>PRICE</th>
+              <th>STATUS</th>
+              <th>UPDATE TIME</th>
+            </tr>
+          </thead>
+          <tbody id="brokerOrdersTableBody">
+            <tr class="empty-table-row empty-row">
+              <td colspan="8">No orders loaded yet. Click Refresh to query Angel One.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js?v=20260915_angel_orders1"></script>
+</body>
+
+</html>
