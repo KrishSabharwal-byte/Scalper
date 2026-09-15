@@ -1,4 +1,4 @@
-# 🌙 Astro Scalper — Multi-User Prediction-Based Options Trading Platform
+# 📈Scalper — Multi-User Prediction-Based Options Trading Platform
 
 An automated **options scalping platform** that generates BUY CE / BUY PE signals from astrological (astro-logic) forecast data, executes trades on live market feeds, and supports **multiple paying users** through a secure login system and an integrated payment gateway.
 
