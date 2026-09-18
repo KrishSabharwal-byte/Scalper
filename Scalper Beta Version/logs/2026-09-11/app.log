@@ -1,0 +1,2 @@
+[10:06:58] [ASTRO_SIGNAL] [NIFTY] [NO_SIGNAL] {'status': 'NO_SIGNAL', 'reason': 'insufficient_rows_remaining', 'remaining_count': 1, 'timestamp': '2026-09-11T10:06:58.082949+05:30'}
+[10:09:08] [ASTRO_SIGNAL] [NIFTY] [NO_SIGNAL] {'status': 'NO_SIGNAL', 'reason': 'insufficient_rows_remaining', 'remaining_count': 1, 'timestamp': '2026-09-11T10:09:08.961128+05:30'}
