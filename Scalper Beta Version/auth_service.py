@@ -25,7 +25,7 @@ logger = logging.getLogger("AuthService")
 # -----------------------------------------------------------------------------
 # Configuration & Secret Management
 # -----------------------------------------------------------------------------
-DEFAULT_MONGO_URI = "mongodb+srv://crestviewcorporate_db_user:Crestviewcorporate@cluster0.zfk4ahy.mongodb.net/?appName=Cluster0"
+DEFAULT_MONGO_URI = ""
 MONGO_URI = os.getenv("MONGO_URI", DEFAULT_MONGO_URI)
 DB_NAME = os.getenv("MONGO_DB_NAME", "new_logic")
 USERS_COLLECTION_NAME = os.getenv("MONGO_USERS_COLLECTION", "slicer_users")
